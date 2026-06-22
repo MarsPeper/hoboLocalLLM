@@ -296,10 +296,10 @@ Example:
 
 ### Phase 2 - Local RAG
 - [ ] Automatic document ingestion
-- [ ] Chunking pipeline
-- [ ] Local embedding generation
-- [ ] Vector storage
-- [ ] Semantic search
+- [x] Chunking pipeline
+- [x] Local embedding generation
+- [x] Vector storage
+- [x] Semantic search
 
 ### Phase 3 - User Experience
 - [ ] Web UI
