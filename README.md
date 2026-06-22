@@ -286,7 +286,6 @@ Example:
 ### Phase 1 - Local Inference
 - [x] llama.cpp setup
 - [x] Local API endpoint
-- [x] llama.cpp GGUF model support
 
 ### Phase 2 - Local RAG
 - [ ] Automatic document ingestion
