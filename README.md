@@ -7,7 +7,7 @@ No cloud services. No API subscriptions. No data leaves your machine.
 
 The only recurring cost is electricity.
 
-Use case: Use case: Deploy a local private chatbot that answers questions using documents stored in your local vector database. All documents remain within your network and are never sent to or hosted by third-party services. If the retrieved information is insufficient to answer a question, the chatbot responds with "I don't know."
+Use case: Deploy a local private chatbot that answers questions using documents stored in your local vector database. All documents remain within your network and are never sent to or hosted by third-party services. If the retrieved information is insufficient to answer a question, the chatbot responds with "I don't know."
 
 Some random ideas for future exploration: 
 + Training the model to have a "persona" so that no system instruction is needeed
