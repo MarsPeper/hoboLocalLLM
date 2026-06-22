@@ -1,0 +1,36 @@
+# Local RAG System Configuration
+
+rag:
+  chunk_size: 500
+  chunk_overlap: 50
+  top_k: 4
+
+embedding:
+  model_name: "all-MiniLM-L6-v2"
+  device: "cpu"  # cpu, cuda, or mps
+
+qdrant:
+  path: "qdrant_db"  # Local folder path for disk-based storage. If empty and url is set, connects to remote server.
+  url: ""            # Optional remote/Docker Qdrant server URL, e.g., http://localhost:6333
+  collection_name: "local_rag_documents"
+
+llm:
+  api_url: "http://localhost:8080/v1"
+  model_name: "local-model"
+  temperature: 0.1
+  max_tokens: 1024
+  system_prompt: |
+    You are a helpful local AI assistant. Answer the user's question using only the provided context blocks below.
+    
+    Rules:
+    1. If the provided context is insufficient or doesn't contain the answer to the question, respond with exactly: "I do not have enough information to answer this question."
+    2. Rely only on the clear facts mentioned in the context. Do not make up facts, do not extrapolate, and do not use outside knowledge.
+    3. Be concise and factual.
+
+    Context:
+    ---
+    {context}
+    ---
+    
+    Question: {question}
+    Answer:
