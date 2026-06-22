@@ -295,25 +295,49 @@ Example:
 - [x] Local API endpoint
 
 ### Phase 2 - Local RAG
-- [ ] Automatic document ingestion
+- [x] Automatic document ingestion
 - [x] Chunking pipeline
 - [x] Local embedding generation
 - [x] Vector storage
 - [x] Semantic search
 
 ### Phase 3 - User Experience
-- [ ] Web UI
-- [ ] Drag-and-drop document uploads
+- [x] Web UI
+- [x] Drag-and-drop document uploads
 - [ ] Chat history
-- [ ] Source citations
-- [ ] A test bench mark from synthetic data for the RAG pipeline
-- [ ] A test bench mark from synthetic data for the model
+- [x] Source citations
+- [ ] A test benchmark from synthetic data for the RAG pipeline
+- [ ] A test benchmark from synthetic data for the model
 
 ### Phase 4 - Production
 - [ ] Multi-user support
 - [ ] Authentication
 - [ ] Docker deployment
 - [ ] Monitoring
+
+---
+
+## 📂 Local RAG Subsystem
+
+A fully local, premium-designed RAG (Retrieval-Augmented Generation) dashboard with Qdrant, FastAPI, and React/Vite is available in the [LocalRAG](./LocalRAG) folder.
+
+### Quick Start Instructions:
+
+1. **Install all dependencies**:
+   Run the automated PowerShell installer:
+   ```powershell
+   cd LocalRAG
+   .\install.ps1
+   ```
+2. **Start the local LLM**:
+   Launch `llama-server` with embedding support enabled (i.e. using the `--embedding` flag).
+3. **Launch the servers**:
+   Run the startup script:
+   ```powershell
+   .\start_rag.ps1
+   ```
+
+For detailed guides, component diagrams, and RAG tuning options, please check the [LocalRAG README](./LocalRAG/README.md).
 
 ---
 
