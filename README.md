@@ -1,4 +1,4 @@
-<img src="https://github.com/MarsPeper/hoboLocalLLM/blob/main/assets/hoboLocalLLM_logo.png" alt="hoboLocalLLM" width="50" height="50"/>
+<img src="https://github.com/MarsPeper/hoboLocalLLM/blob/main/assets/hoboLocalLLM_logo.png" alt="hoboLocalLLM" width="200" height="200"/>
 # hoboLocalLLM
 
 A fully local AI chatbot pipeline with a fully local RAG (Retrieval-Augmented Generation) system.
