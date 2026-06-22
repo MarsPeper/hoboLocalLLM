@@ -1,6 +1,6 @@
 <img src="https://github.com/MarsPeper/hoboLocalLLM/blob/main/assets/hoboLocalLLM_logo.png" alt="hoboLocalLLM" width="200" height="200"/>
 # hoboLocalLLM
-
+Right now, most of the stuff I wrote is mainly for Windows.
 A fully local AI chatbot pipeline with a fully local RAG (Retrieval-Augmented Generation) system.
 
 No cloud services. No API subscriptions. No data leaves your machine.
