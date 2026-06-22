@@ -1,3 +1,6 @@
+<p align="center">
+  <img src="assets/hoboLocalLLM-logo.png" width="250">
+</p>
 # hoboLocalLLM
 
 A fully local AI chatbot pipeline with a fully local RAG (Retrieval-Augmented Generation) system.
