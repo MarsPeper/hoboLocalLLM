@@ -239,6 +239,7 @@ After startup, the API will be available locally:
 ```text
 http://localhost:8080
 ```
+There's a web UI that's similar to chatgpt at http://localhost:8080/
 
 The endpoint is compatible with:
 
