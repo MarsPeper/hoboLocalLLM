@@ -6,6 +6,12 @@ No cloud services. No API subscriptions. No data leaves your machine.
 
 The only recurring cost is electricity.
 
+Use case: Use case: Deploy a local private chatbot that answers questions using documents stored in your local vector database. All documents remain within your network and are never sent to or hosted by third-party services. If the retrieved information is insufficient to answer a question, the chatbot responds with "I don't know."
+
+Some random ideas for future exploration: 
++ Training the model to have a "persona" so that no system instruction is needeed
++ Training the model on the documentation directly
+
 ## Features
 
 - 100% local inference using `llama.cpp`
@@ -239,6 +245,7 @@ After startup, the API will be available locally:
 ```text
 http://localhost:8080
 ```
+There's a web UI that's similar to chatgpt at http://localhost:8080/
 
 The endpoint is compatible with:
 
@@ -285,7 +292,6 @@ Example:
 ### Phase 1 - Local Inference
 - [x] llama.cpp setup
 - [x] Local API endpoint
-- [x] GGUF model support
 
 ### Phase 2 - Local RAG
 - [ ] Automatic document ingestion
@@ -299,6 +305,8 @@ Example:
 - [ ] Drag-and-drop document uploads
 - [ ] Chat history
 - [ ] Source citations
+- [ ] A test bench mark from synthetic data for the RAG pipeline
+- [ ] A test bench mark from synthetic data for the model
 
 ### Phase 4 - Production
 - [ ] Multi-user support
