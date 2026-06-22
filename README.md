@@ -299,6 +299,8 @@ Example:
 - [ ] Drag-and-drop document uploads
 - [ ] Chat history
 - [ ] Source citations
+- [ ] A test bench mark from synthetic data for the RAG pipeline
+- [ ] A test bench mark from synthetic data for the model
 
 ### Phase 4 - Production
 - [ ] Multi-user support
