@@ -6,7 +6,7 @@ import random
 # Add current folder to path
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 
-from document_processor import RecursiveCharacterTextSplitter
+from langchain_text_splitters import RecursiveCharacterTextSplitter
 from embeddings_manager import EmbeddingsManager
 from vector_store import VectorStore
 
@@ -16,9 +16,13 @@ def run_tests():
     print("=========================================")
     
     # 1. Test Text Splitter
-    print("\n[1/3] Testing Recursive Character Text Splitter...")
+    print("\n[1/3] Testing LangChain Recursive Character Text Splitter...")
     text = "Hello world! This is a test paragraph.\n\nHere is a second paragraph that has some text to split."
-    splitter = RecursiveCharacterTextSplitter(chunk_size=30, chunk_overlap=5)
+    splitter = RecursiveCharacterTextSplitter(chunk_size=30, 
+                                              chunk_overlap=5,
+                                              separators=["\n\n", "\n", " ", ""]
+    )
+    
     chunks = splitter.split_text(text)
     print(f"Generated {len(chunks)} chunks:")
     for i, c in enumerate(chunks):
