@@ -4,7 +4,7 @@ import json
 import shutil
 import logging
 from typing import List, Dict, Any, Optional
-from fastapi import FastAPI, UploadFile, File, HTTPException, Body
+from fastapi import FastAPI, UploadFile, File, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
@@ -30,7 +30,7 @@ app = FastAPI(title="Local RAG System API")
 # Configure CORS for React development server (port 5173 by default)
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # For local setup, allow all; can restrict in prod
+    allow_origins=["*"],  # For local setup, allow all
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -57,36 +57,41 @@ def initialize_components():
     
     load_system_config()
     
-    # Initialize Embeddings Manager
+    # Extract settings
+    rag_conf = config.get("rag", {})
     emb_config = config.get("embedding", {})
+    qdrant_config = config.get("qdrant", {})
     llm_config = config.get("llm", {})
     
-    # We pass llm_api_url to check if we can generate embeddings via LLM server first
+    # 1. Initialize Embeddings Manager
     embeddings_manager = EmbeddingsManager(
         model_name=emb_config.get("model_name", "all-MiniLM-L6-v2"),
+        sparse_model_name=emb_config.get("sparse_model_name", "Qdrant/bm25"),
         device=emb_config.get("device", "cpu"),
         api_url=llm_config.get("api_url", "http://localhost:8080/v1")
     )
     
-    # Initialize Vector Store
-    qdrant_config = config.get("qdrant", {})
+    # 2. Resolve Qdrant storage path
     qdrant_path = qdrant_config.get("path")
-    # If path is relative, resolve it relative to backend directory
     if qdrant_path and not os.path.isabs(qdrant_path):
         qdrant_path = os.path.join(BACKEND_DIR, qdrant_path)
         
+    # 3. Initialize Vector Store (using dense and sparse embeddings from manager)
     vector_store = VectorStore(
         collection_name=qdrant_config.get("collection_name", "local_rag_documents"),
+        dense_embeddings=embeddings_manager.dense_embeddings,
+        sparse_embeddings=embeddings_manager.sparse_embeddings,
         path=qdrant_path,
-        url=qdrant_config.get("url")
+        url=qdrant_config.get("url"),
+        use_hybrid_search=rag_conf.get("use_hybrid_search", True)
     )
     
-    # Initialize LLM Connector
+    # 4. Initialize LLM Connector
     llm_connector = LLMConnector(
         api_url=llm_config.get("api_url", "http://localhost:8080/v1"),
         model_name=llm_config.get("model_name", "local-model")
     )
-    logger.info("RAG pipeline components initialized successfully.")
+    logger.info("LangChain RAG pipeline components initialized successfully.")
 
 # Initial initialization
 initialize_components()
@@ -171,23 +176,19 @@ async def upload_document(file: UploadFile = File(...)):
         chunk_size = rag_conf.get("chunk_size", 500)
         chunk_overlap = rag_conf.get("chunk_overlap", 50)
         
-        # Step 1: Text extraction and Chunking
-        chunks = process_document(temp_path, chunk_size=chunk_size, chunk_overlap=chunk_overlap)
-        if not chunks:
+        # Step 1: Text extraction and Chunking (returns list of LangChain Document objects)
+        documents = process_document(temp_path, chunk_size=chunk_size, chunk_overlap=chunk_overlap)
+        if not documents:
             raise HTTPException(status_code=400, detail="Document yielded no text content.")
             
-        # Step 2: Generate Embeddings
-        logger.info(f"Generating embeddings for {len(chunks)} chunks...")
-        texts = [c["content"] for c in chunks]
-        vectors = embeddings_manager.get_embeddings(texts)
-        
-        # Step 3: Store in Qdrant
-        vector_store.add_chunks(chunks, vectors)
+        # Step 2: Store in Qdrant via LangChain (handles dense and sparse vectors internally)
+        logger.info(f"Indexing {len(documents)} chunks to Qdrant Vector Store...")
+        vector_store.add_documents(documents)
         
         return {
             "status": "success",
             "file_name": file.filename,
-            "chunks_count": len(chunks)
+            "chunks_count": len(documents)
         }
     except Exception as e:
         logger.error(f"Failed to process upload {file.filename}: {e}")
@@ -201,15 +202,22 @@ async def upload_document(file: UploadFile = File(...)):
 def query_pipeline(request: QueryRequest):
     """Processes user query: search similarity -> prompt construct -> LLM generate."""
     try:
-        # Step 1: Embed question
-        q_emb = embeddings_manager.get_embedding(request.question)
-        
-        # Step 2: Search similarity
+        # Step 1: Search similarity (uses hybrid search & FlashRank reranking if enabled)
         rag_conf = config.get("rag", {})
         top_k = rag_conf.get("top_k", 4)
-        sources = vector_store.search_similar(q_emb, top_k=top_k)
+        use_reranker = rag_conf.get("use_reranker", True)
+        reranker_model = rag_conf.get("reranker_model", "ms-marco-MiniLM-L-12-v2")
+        base_retrieve_k = rag_conf.get("base_retrieve_k", 12)
         
-        # Step 3: Construct LLM prompt
+        sources = vector_store.search_similar(
+            query=request.question,
+            top_k=top_k,
+            use_reranker=use_reranker,
+            reranker_model=reranker_model,
+            base_retrieve_k=base_retrieve_k
+        )
+        
+        # Step 2: Construct LLM prompt
         context_blocks = []
         for src in sources:
             context_blocks.append(

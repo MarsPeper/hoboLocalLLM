@@ -260,31 +260,40 @@ The endpoint is compatible with:
 
 ---
 
-## Included Startup Scripts
+## Included Scripts — `LocalLLM/`
 
-The `LocalLLM` folder contains startup scripts for launching a local model quickly.
+The `LocalLLM` folder contains two scripts.
 
-### PowerShell Script
+### `install.ps1` — One-time setup
 
-The provided PowerShell script:
-
-- Activates the `LocalLLM` Conda environment
-- Starts `llama-server`
-- Uses sensible default settings
-- Can be customized for your hardware
-
-Before running the script:
-
-1. Download a GGUF model.
-2. Update the model path in the script.
-3. Save the file.
-4. Run the script.
-
-Example:
+Run this once to install Conda, create the `LocalLLM` environment, and install `llama.cpp`:
 
 ```powershell
-.\Start-LocalLLM.ps1
+cd LocalLLM
+.\install.ps1
 ```
+
+This script will:
+- Verify that Conda is available in your PATH.
+- Create (or reuse) the `LocalLLM` Conda environment with Python 3.11.
+- Add the `conda-forge` channel and install `llama.cpp`.
+- Verify the installation by running `llama-server --version`.
+
+### `startLocalLLM.ps1` — Launch the server
+
+After installing, edit the model path inside the script, then run it:
+
+```powershell
+.\startLocalLLM.ps1
+```
+
+This script:
+- Activates the `LocalLLM` Conda environment.
+- Starts `llama-server` with sensible defaults (8192 context, full GPU offload).
+- Exposes an OpenAI-compatible API on `http://localhost:8080`.
+
+> **Before running**: Download a GGUF model (e.g. Phi-4 Mini, Qwen3, Llama 3.2 from
+> [huggingface.co](https://huggingface.co)) and update the `-m` path in `startLocalLLM.ps1`.
 
 ---
 
@@ -295,19 +304,19 @@ Example:
 - [x] Local API endpoint
 
 ### Phase 2 - Local RAG
-- [x] Automatic document ingestion
-- [x] Chunking pipeline
-- [x] Local embedding generation
-- [x] Vector storage
-- [x] Semantic search
+- [x] Automatic document ingestion (using LangChain loaders)
+- [x] Hybrid Chunking pipeline (Recursive Character Splitting)
+- [x] Local embedding generation (Dense + FastEmbed Sparse)
+- [x] Vector storage (Qdrant)
+- [x] Semantic & Lexical Hybrid search (Dense + Sparse/BM25)
+- [x] Contextual Reranking (FlashRank Cross-Encoder)
 
 ### Phase 3 - User Experience
 - [x] Web UI
 - [x] Drag-and-drop document uploads
 - [ ] Chat history
-- [x] Source citations
-- [ ] A test benchmark from synthetic data for the RAG pipeline
-- [ ] A test benchmark from synthetic data for the model
+- [x] Source citations with score ratings
+- [x] A test benchmark evaluation suite for the RAG pipeline and local models
 
 ### Phase 4 - Production
 - [ ] Multi-user support

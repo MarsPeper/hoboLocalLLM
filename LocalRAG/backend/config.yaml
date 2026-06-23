@@ -4,9 +4,15 @@ rag:
   chunk_size: 500
   chunk_overlap: 50
   top_k: 4
+  use_hybrid_search: true
+  use_reranker: true
+  reranker_model: "ms-marco-MiniLM-L-12-v2"
+  rerank_top_k: 4            # Number of final chunks passed to LLM
+  base_retrieve_k: 12        # Chunks fetched before reranking
 
 embedding:
   model_name: "all-MiniLM-L6-v2"
+  sparse_model_name: "Qdrant/bm25"
   device: "cpu"  # cpu, cuda, or mps
 
 qdrant:

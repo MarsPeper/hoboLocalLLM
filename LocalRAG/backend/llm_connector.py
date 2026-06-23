@@ -1,83 +1,84 @@
-import json
 import logging
-import httpx
-from typing import List, Dict, Any, Generator
+from typing import Generator
+from langchain_openai import ChatOpenAI
+from langchain_core.messages import SystemMessage, HumanMessage
 
 logger = logging.getLogger(__name__)
 
+
 class LLMConnector:
-    def __init__(self, api_url: str = "http://localhost:8080/v1", model_name: str = "local-model"):
-        self.api_url = api_url.rstrip('/')
+    """
+    LangChain LLM connector that interfaces with local OpenAI-compatible chat completion
+    endpoints (e.g. llama-server, Ollama, LM Studio).
+    """
+
+    def __init__(
+        self,
+        api_url: str = "http://localhost:8080/v1",
+        model_name: str = "local-model"
+    ):
+        self.api_url = api_url.rstrip("/")
         self.model_name = model_name
 
-    def generate_response(self, system_prompt: str, user_question: str, temperature: float = 0.1, max_tokens: int = 1024) -> str:
-        """Call the local LLM endpoint synchronously (non-streaming)."""
-        messages = [
-            {"role": "system", "content": system_prompt},
-            {"role": "user", "content": user_question}
-        ]
-        
+    def generate_response(
+        self,
+        system_prompt: str,
+        user_question: str,
+        temperature: float = 0.1,
+        max_tokens: int = 1024
+    ) -> str:
+        """Invokes the local LLM and returns the completed text string."""
+        logger.info(f"Invoking ChatOpenAI (non-stream) at {self.api_url}/chat/completions...")
         try:
-            logger.info(f"Sending LLM request to {self.api_url}/chat/completions...")
-            response = httpx.post(
-                f"{self.api_url}/chat/completions",
-                json={
-                    "model": self.model_name,
-                    "messages": messages,
-                    "temperature": temperature,
-                    "max_tokens": max_tokens,
-                    "stream": False
-                },
-                timeout=120.0
+            llm = ChatOpenAI(
+                base_url=self.api_url,
+                api_key="not-needed",
+                model=self.model_name,
+                temperature=temperature,
+                max_tokens=max_tokens
             )
-            response.raise_for_status()
-            data = response.json()
-            return data["choices"][0]["message"]["content"]
+            messages = [
+                SystemMessage(content=system_prompt),
+                HumanMessage(content=user_question)
+            ]
+            response = llm.invoke(messages)
+            return response.content
         except Exception as e:
-            logger.error(f"Error calling local LLM API: {e}")
-            return f"Error connecting to local LLM server at {self.api_url}. Please ensure that the llama-server is started and running correctly. Details: {str(e)}"
+            logger.error(f"LangChain LLM call failed: {e}")
+            return (
+                f"Error connecting to local LLM server at {self.api_url}.\n"
+                f"Make sure your llama-server or LLM model provider is running.\n"
+                f"Details: {str(e)}"
+            )
 
-    def generate_response_stream(self, system_prompt: str, user_question: str, temperature: float = 0.1, max_tokens: int = 1024) -> Generator[str, None, None]:
-        """Calls the local LLM endpoint and yields response tokens as they arrive."""
-        messages = [
-            {"role": "system", "content": system_prompt},
-            {"role": "user", "content": user_question}
-        ]
-        
+    def generate_response_stream(
+        self,
+        system_prompt: str,
+        user_question: str,
+        temperature: float = 0.1,
+        max_tokens: int = 1024
+    ) -> Generator[str, None, None]:
+        """Streams response tokens from the local LLM using LangChain."""
+        logger.info(f"Invoking ChatOpenAI (streaming) at {self.api_url}/chat/completions...")
         try:
-            logger.info(f"Sending streaming LLM request to {self.api_url}/chat/completions...")
-            
-            with httpx.Client() as client:
-                with client.stream(
-                    "POST",
-                    f"{self.api_url}/chat/completions",
-                    json={
-                        "model": self.model_name,
-                        "messages": messages,
-                        "temperature": temperature,
-                        "max_tokens": max_tokens,
-                        "stream": True
-                    },
-                    timeout=120.0
-                ) as response:
-                    if response.status_code != 200:
-                        yield f"Error: LLM server responded with status code {response.status_code}."
-                        return
-
-                    for line in response.iter_lines():
-                        if not line:
-                            continue
-                        if line.startswith("data: "):
-                            data_str = line[6:].strip()
-                            if data_str == "[DONE]":
-                                break
-                            try:
-                                chunk_json = json.loads(data_str)
-                                content = chunk_json["choices"][0]["delta"].get("content", "")
-                                if content:
-                                    yield content
-                            except json.JSONDecodeError:
-                                continue
+            llm = ChatOpenAI(
+                base_url=self.api_url,
+                api_key="not-needed",
+                model=self.model_name,
+                temperature=temperature,
+                max_tokens=max_tokens,
+                streaming=True
+            )
+            messages = [
+                SystemMessage(content=system_prompt),
+                HumanMessage(content=user_question)
+            ]
+            for chunk in llm.stream(messages):
+                if chunk.content:
+                    yield chunk.content
         except Exception as e:
-            logger.error(f"Error in LLM stream: {e}")
-            yield f"\n[Error communicating with local LLM server at {self.api_url}: {str(e)}. Please check if your llama-server is running.]"
+            logger.error(f"LangChain LLM streaming failed: {e}")
+            yield (
+                f"\n[Error streaming from local LLM server at {self.api_url}. "
+                f"Is llama-server running? Details: {str(e)}]"
+            )

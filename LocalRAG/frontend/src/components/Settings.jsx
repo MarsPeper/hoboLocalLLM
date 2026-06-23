@@ -86,44 +86,107 @@ export default function Settings() {
           
           {/* Section 1: RAG Settings */}
           <div className="settings-card">
-            <h3>RAG Chunking Settings</h3>
-            <p className="card-desc">Modify document partitioning logic (requires re-uploading documents to apply changes).</p>
+            <h3>RAG Chunking & Retrieval Settings</h3>
+            <p className="card-desc">Modify document partitioning logic and advanced retrieval pipelines.</p>
             
-            <div className="form-group">
-              <label>Chunk Size (Characters)</label>
-              <input
-                type="number"
-                value={config.rag.chunk_size}
-                onChange={(e) => handleInputChange('rag', 'chunk_size', parseInt(e.target.value) || 500)}
-                min="100"
-                max="5000"
-              />
-              <span className="input-hint">Industry standard: 500-1000 characters. Large sizes capture more context but dilute search specificity.</span>
+            <div className="form-group-row">
+              <div className="form-group">
+                <label>Chunk Size (Characters)</label>
+                <input
+                  type="number"
+                  value={config.rag.chunk_size}
+                  onChange={(e) => handleInputChange('rag', 'chunk_size', parseInt(e.target.value) || 500)}
+                  min="100"
+                  max="5000"
+                />
+              </div>
+
+              <div className="form-group">
+                <label>Chunk Overlap (Characters)</label>
+                <input
+                  type="number"
+                  value={config.rag.chunk_overlap}
+                  onChange={(e) => handleInputChange('rag', 'chunk_overlap', parseInt(e.target.value) || 50)}
+                  min="0"
+                  max="1000"
+                />
+              </div>
             </div>
 
-            <div className="form-group">
-              <label>Chunk Overlap (Characters)</label>
+            <div className="form-group toggle-row" style={{ display: 'flex', alignItems: 'center', gap: '10px', margin: '15px 0' }}>
               <input
-                type="number"
-                value={config.rag.chunk_overlap}
-                onChange={(e) => handleInputChange('rag', 'chunk_overlap', parseInt(e.target.value) || 50)}
-                min="0"
-                max="1000"
+                type="checkbox"
+                id="use_hybrid_search"
+                checked={config.rag.use_hybrid_search ?? true}
+                onChange={(e) => handleInputChange('rag', 'use_hybrid_search', e.target.checked)}
+                style={{ width: '20px', height: '20px', cursor: 'pointer' }}
               />
-              <span className="input-hint">Ensures semantic continuity between chunks. Recommended: 10% of chunk size.</span>
+              <label htmlFor="use_hybrid_search" style={{ cursor: 'pointer', fontWeight: 'bold' }}>Enable Hybrid Search (Dense + Sparse/BM25)</label>
             </div>
 
-            <div className="form-group">
-              <label>Retrieval Limit (Top K Chunks)</label>
+            <div className="form-group toggle-row" style={{ display: 'flex', alignItems: 'center', gap: '10px', margin: '15px 0' }}>
               <input
-                type="number"
-                value={config.rag.top_k}
-                onChange={(e) => handleInputChange('rag', 'top_k', parseInt(e.target.value) || 4)}
-                min="1"
-                max="20"
+                type="checkbox"
+                id="use_reranker"
+                checked={config.rag.use_reranker ?? true}
+                onChange={(e) => handleInputChange('rag', 'use_reranker', e.target.checked)}
+                style={{ width: '20px', height: '20px', cursor: 'pointer' }}
               />
-              <span className="input-hint">Number of context chunks injected into prompt. Recommended: 3-5.</span>
+              <label htmlFor="use_reranker" style={{ cursor: 'pointer', fontWeight: 'bold' }}>Enable FlashRank Reranker</label>
             </div>
+
+            {config.rag.use_reranker && (
+              <div className="reranker-subsettings" style={{ borderLeft: '3px solid var(--accent-glow, #3b82f6)', paddingLeft: '15px', marginTop: '10px' }}>
+                <div className="form-group">
+                  <label>Reranker Model</label>
+                  <input
+                    type="text"
+                    value={config.rag.reranker_model || 'ms-marco-MiniLM-L-12-v2'}
+                    onChange={(e) => handleInputChange('rag', 'reranker_model', e.target.value)}
+                  />
+                </div>
+
+                <div className="form-group-row">
+                  <div className="form-group">
+                    <label>Rerank Limit (Final Top K)</label>
+                    <input
+                      type="number"
+                      value={config.rag.top_k}
+                      onChange={(e) => handleInputChange('rag', 'top_k', parseInt(e.target.value) || 4)}
+                      min="1"
+                      max="20"
+                    />
+                    <span className="input-hint">Chunks passed to LLM.</span>
+                  </div>
+
+                  <div className="form-group">
+                    <label>Base Retrieve Limit (Pre-Rerank K)</label>
+                    <input
+                      type="number"
+                      value={config.rag.base_retrieve_k || 12}
+                      onChange={(e) => handleInputChange('rag', 'base_retrieve_k', parseInt(e.target.value) || 12)}
+                      min="2"
+                      max="50"
+                    />
+                    <span className="input-hint">Chunks evaluated by reranker.</span>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {!config.rag.use_reranker && (
+              <div className="form-group">
+                <label>Retrieval Limit (Top K Chunks)</label>
+                <input
+                  type="number"
+                  value={config.rag.top_k}
+                  onChange={(e) => handleInputChange('rag', 'top_k', parseInt(e.target.value) || 4)}
+                  min="1"
+                  max="20"
+                />
+                <span className="input-hint">Number of context chunks injected into prompt.</span>
+              </div>
+            )}
           </div>
 
           {/* Section 2: LLM Inference Settings */}
@@ -183,13 +246,23 @@ export default function Settings() {
             <p className="card-desc">Pipeline backend models and database endpoints.</p>
 
             <div className="form-group">
-              <label>Embedding Model Name</label>
+              <label>Dense Embedding Model Name</label>
               <input
                 type="text"
                 value={config.embedding.model_name}
                 onChange={(e) => handleInputChange('embedding', 'model_name', e.target.value)}
               />
-              <span className="input-hint">Hugging Face identifier (e.g. all-MiniLM-L6-v2, BAAI/bge-small-en-v1.5)</span>
+              <span className="input-hint">Hugging Face identifier (e.g. all-MiniLM-L6-v2)</span>
+            </div>
+
+            <div className="form-group">
+              <label>Sparse Embedding Model Name</label>
+              <input
+                type="text"
+                value={config.embedding.sparse_model_name || 'Qdrant/bm25'}
+                onChange={(e) => handleInputChange('embedding', 'sparse_model_name', e.target.value)}
+              />
+              <span className="input-hint">Lexical identifier (e.g. Qdrant/bm25)</span>
             </div>
 
             <div className="form-group">

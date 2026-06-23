@@ -1,0 +1,48 @@
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.pytest_cache/
+.ipynb_checkpoints/
+
+# Virtual Environments
+.venv/
+venv/
+env/
+ENV/
+dist/
+build/
+*.egg-info/
+
+# Local RAG Subsystem
+LocalRAG/backend/qdrant_db/
+LocalRAG/backend/temp_uploads/
+LocalRAG/backend/*.txt
+!LocalRAG/backend/requirements.txt
+
+# Node / Frontend (fallback root ignore)
+node_modules/
+LocalRAG/frontend/node_modules/
+LocalRAG/frontend/dist/
+LocalRAG/frontend/dist-ssr/
+*.local
+
+# Local Models (in case downloaded inside the workspace)
+*.gguf
+*.bin
+
+# Editors & IDEs
+.vscode/
+!.vscode/extensions.json
+.idea/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.swp
+*.swo
+
+# OS Files
+.DS_Store
+Thumbs.db
