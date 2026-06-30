@@ -37,6 +37,4 @@ llm:
     ---
     {context}
     ---
-    
-    Question: {question}
-    Answer:
+

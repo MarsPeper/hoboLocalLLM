@@ -46,3 +46,7 @@ LocalRAG/frontend/dist-ssr/
 # OS Files
 .DS_Store
 Thumbs.db
+
+# Project Wiki
+wiki.md
+

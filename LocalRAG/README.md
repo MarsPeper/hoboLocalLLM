@@ -74,10 +74,12 @@ This script will:
 ## 🏃 Running the System
 
 ### Step 1: Start your Local LLM Server
+Ensure you have downloaded a GGUF model. We recommend Microsoft's **[Phi-4 Mini Instruct (Q8_0)](https://huggingface.co/unsloth/Phi-4-mini-instruct-GGUF/resolve/main/Phi-4-mini-instruct.Q8_0.gguf?download=true)**.
+
 In a separate terminal, launch your local GGUF model using `llama-server`. Ensure that the server runs with embedding support:
 ```powershell
 conda activate LocalLLM
-llama-server -m "C:\LLMModels\your_model.gguf" -c 8192 --host 0.0.0.0 --port 8080 --embedding
+llama-server -m "C:\LLMModels\Phi-4-mini-instruct.Q8_0.gguf" -c 8192 --host 0.0.0.0 --port 8080 --embedding
 ```
 *(You can also use the startup script located in the root `/LocalLLM` directory if configured.)*
 

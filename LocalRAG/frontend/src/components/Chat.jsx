@@ -73,19 +73,29 @@ export default function Chat() {
               const parsed = JSON.parse(dataStr);
               if (parsed.type === 'sources') {
                 setMessages((prev) => {
+                  if (prev.length === 0) return prev;
                   const updated = [...prev];
-                  const last = updated[updated.length - 1];
+                  const idx = updated.length - 1;
+                  const last = updated[idx];
                   if (last && last.role === 'assistant') {
-                    last.sources = parsed.sources;
+                    updated[idx] = {
+                      ...last,
+                      sources: parsed.sources
+                    };
                   }
                   return updated;
                 });
               } else if (parsed.type === 'token') {
                 setMessages((prev) => {
+                  if (prev.length === 0) return prev;
                   const updated = [...prev];
-                  const last = updated[updated.length - 1];
+                  const idx = updated.length - 1;
+                  const last = updated[idx];
                   if (last && last.role === 'assistant') {
-                    last.content += parsed.token;
+                    updated[idx] = {
+                      ...last,
+                      content: last.content + parsed.token
+                    };
                   }
                   return updated;
                 });

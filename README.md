@@ -292,8 +292,10 @@ This script:
 - Starts `llama-server` with sensible defaults (8192 context, full GPU offload).
 - Exposes an OpenAI-compatible API on `http://localhost:8080`.
 
-> **Before running**: Download a GGUF model (e.g. Phi-4 Mini, Qwen3, Llama 3.2 from
-> [huggingface.co](https://huggingface.co)) and update the `-m` path in `startLocalLLM.ps1`.
+> **Before running**: Download a GGUF model. We recommend starting with Microsoft's **Phi-4 Mini Instruct (Q8_0)**:
+> - **[Direct Download: Phi-4-mini-instruct.Q8_0.gguf (4.3 GB)](https://huggingface.co/unsloth/Phi-4-mini-instruct-GGUF/resolve/main/Phi-4-mini-instruct.Q8_0.gguf?download=true)**
+>
+> Save the downloaded file to `C:\LLMModels\` and update the `-m` path in `startLocalLLM.ps1`.
 
 ---
 

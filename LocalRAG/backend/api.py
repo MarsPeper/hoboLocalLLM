@@ -93,8 +93,10 @@ def initialize_components():
     )
     logger.info("LangChain RAG pipeline components initialized successfully.")
 
-# Initial initialization
-initialize_components()
+# Initial initialization via FastAPI startup event to avoid double-locking local Qdrant during uvicorn reload
+@app.on_event("startup")
+def startup_event():
+    initialize_components()
 
 
 class QueryRequest(BaseModel):
