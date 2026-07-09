@@ -28,44 +28,123 @@ Some random ideas for future exploration:
 
 ## Architecture
 
-![Overall Pipeline Diagram](assets/rag_pipeline_diagram.png)
+### 1. High-Level Subsystem Architecture
+Both clients (WPF and React Web UI) communicate exclusively with the FastAPI Backend Server (on port 8000). The backend server handles document loading, indexing, vector searching, and queries the local LLM running via `llama-server` (on port 8080).
 
-```text
-User
- │
- ▼
-Chat UI
- │
- ▼
-RAG Pipeline
- │
- ├── Retrieve Relevant Chunks
- │
- ▼
-Vector Database
- │
- └── Embedded Documents
- │
- ▼
-llama.cpp
- │
- ▼
-Local LLM (GGUF)
- │
- ▼
-Response
+```mermaid
+graph TB
+    %% Clients
+    subgraph Clients [Clients]
+        WPF[WPF Client App: WPFAIChat]
+        WebUI[React/Vite Frontend Web App]
+    end
+
+    %% Application Backend
+    subgraph AppServer [Application Server]
+        FastAPI[FastAPI Backend Server]
+        DocProc[Document Processor]
+        Embeds[Embeddings Manager]
+        VecStore[Vector Store Client]
+        LLMConn[LLM Connector]
+    end
+
+    %% Database & Monitoring Stack
+    subgraph DBStack [Data & Monitoring Services (Docker)]
+        Qdrant[(Qdrant Vector DB)]
+        Prometheus[Prometheus Metrics]
+        Grafana[Grafana Dashboards]
+    end
+
+    %% Inference Engine
+    subgraph LocalLLMSub [Inference Engine]
+        LlamaServer[llama-server / llama.cpp]
+        GGUF[(Local GGUF Model)]
+    end
+
+    %% Connections
+    WebUI <-->|HTTP / SSE Stream| FastAPI
+    WPF <-->|HTTP / SSE Stream| FastAPI
+    
+    FastAPI --> DocProc
+    FastAPI --> Embeds
+    FastAPI --> VecStore
+    FastAPI --> LLMConn
+
+    VecStore <-->|Dense/Sparse Queries| Qdrant
+    LLMConn <-->|OpenAI-Compatible API| LlamaServer
+    LlamaServer <-->|Local Inference| GGUF
+
+    %% Monitoring connections
+    Qdrant -.->|Export Metrics| Prometheus
+    Prometheus -.->|Pull Metrics| Grafana
 ```
 
-### Planned Workflow
+> [!NOTE]
+> There is no direct connection/network path between the Clients and the Inference Engine. All traffic, prompt context compilation, and Server-Sent Events (SSE) streaming flow through the FastAPI backend server to ensure safety and orchestration.
 
-1. User uploads documents.
-2. Documents are chunked automatically.
-3. Chunks are converted into embeddings.
-4. Embeddings are stored locally.
-5. User asks a question.
-6. Relevant chunks are retrieved.
-7. Retrieved context is sent to the local LLM.
-8. The model generates a response.
+### 2. Document Ingestion Pipeline
+When a user uploads a document, the system splits, embeds, and indexes it into the local database:
+
+```mermaid
+flowchart TD
+    %% Source
+    Doc([Raw Document: PDF/DOCX/TXT/MD]) --> Upload[API Endpoint: /api/documents/upload]
+    
+    %% Processing
+    Upload --> DocLoader[LangChain Document Loaders]
+    DocLoader --> Chunking[RecursiveCharacterTextSplitter]
+    
+    %% Embedding
+    Chunking --> ChunkText[Document Chunks]
+    
+    subgraph VectorGeneration [Vector Generation]
+        ChunkText --> DenseGen[Dense Embedding: Hugging Face]
+        ChunkText --> SparseGen[Sparse Embedding: FastEmbed SPLADE]
+    end
+    
+    %% Database Storage
+    DenseGen -->|Dense Vector| QdrantPush[Qdrant Collection]
+    SparseGen -->|Sparse Vector| QdrantPush
+```
+
+- **Loaders**: Converts PDF, DOCX, TXT, and Markdown files into raw text chunks.
+- **Splitters**: Recursively splits chunks with overlaps to maintain passage coherence.
+- **Hybrid Embeddings**: Generates both a **Dense Vector** (for semantic concept search) and a **Sparse Vector** (for exact keyword/lexical search) and writes them to the local Qdrant collection.
+
+### 3. Retrieval & Generation Pipeline (RAG Flow)
+When a user submits a query, the system retrieves context, reranks the best matches, compiles a prompt, and streams the answer from the local LLM:
+
+```mermaid
+flowchart TD
+    %% User input
+    Query([User Query]) --> APIQuery[API Endpoint: /api/chat]
+    
+    %% Vector generation for search
+    APIQuery --> DenseEmbed[Generate Dense Query Embeddings]
+    APIQuery --> SparseEmbed[Generate Sparse Query Embeddings]
+    
+    %% Vector Database Hybrid Search
+    subgraph Retrieval [Vector Retrieval]
+        DenseEmbed --> QdrantSearch[(Qdrant DB)]
+        SparseEmbed --> QdrantSearch
+        QdrantSearch -->|Hybrid Retrieve| Candidates[Top 12 Candidates]
+    end
+    
+    %% Reranking & Compression
+    Candidates --> Reranker[FlashRank Cross-Encoder Reranker]
+    Reranker -->|Re-scored & Sorted| TopK[Top 4 Reranked Context Chunks]
+    
+    %% Generation
+    TopK --> PromptBuilder[Prompt Template Assembly]
+    Query --> PromptBuilder
+    
+    PromptBuilder -->|Context + Query| LlamaInference[llama-server]
+    LlamaInference -->|Stream SSE Tokens| UserResponse[User Interface Response]
+```
+
+- **Hybrid Search**: Dense & sparse retrieval are executed against the Qdrant DB. 12 candidates are retrieved.
+- **FlashRank Cross-Encoder**: Reranks base candidates based on exact semantic relevance to the query, filtering it down to the top 4 chunks.
+- **Context Generation**: Assembles the prompt context and sends it to the local `llama-server`. The response is streamed token-by-token using SSE (Server-Sent Events) back to the UI.
 
 No internet connection is required after setup.
 
