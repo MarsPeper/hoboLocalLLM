@@ -49,7 +49,7 @@ graph TB
     end
 
     %% Database & Monitoring Stack
-    subgraph DBStack [Data & Monitoring Services (Docker)]
+    subgraph DBStack ["Data & Monitoring Services (Docker)"]
         Qdrant[(Qdrant Vector DB)]
         Prometheus[Prometheus Metrics]
         Grafana[Grafana Dashboards]
@@ -430,6 +430,22 @@ A fully local, premium-designed RAG (Retrieval-Augmented Generation) dashboard w
    ```
 
 For detailed guides, component diagrams, and RAG tuning options, please check the [LocalRAG README](./LocalRAG/README.md).
+
+---
+
+## 🖥️ WPF Desktop Client
+
+A native Windows desktop chat and configuration client built in C# / WPF (.NET 9) is available in the [WPFAIChat](./WPFAIChat) folder.
+
+### Quick Start Instructions:
+1. Ensure the LocalRAG backend server is running (`.\start_rag.ps1` in `LocalRAG/`).
+2. Run the desktop application from the CLI:
+   ```powershell
+   cd WPFAIChat
+   dotnet run
+   ```
+
+For advanced features and code structure, see the [WPFAIChat README](./WPFAIChat/README.md).
 
 ---
 
