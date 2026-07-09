@@ -103,6 +103,13 @@ def startup_event():
     initialize_components()
 
 
+@app.get("/api/health")
+def health_check():
+    """Lightweight health check endpoint returning success without database query."""
+    return {"status": "ok"}
+
+
+
 class QueryRequest(BaseModel):
     question: str
     stream: bool = True

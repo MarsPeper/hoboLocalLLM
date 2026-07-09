@@ -21,7 +21,8 @@ namespace WPFAIChat
         private readonly HttpClient _httpClient;
         private readonly ObservableCollection<ChatMessageItem> _chatMessages;
         private readonly ObservableCollection<DocumentItem> _documents;
-        private const string ApiBaseUrl = "http://localhost:8000/api/";
+        private const string ApiBaseUrl = "http://127.0.0.1:8000/api/";
+        private System.Windows.Threading.DispatcherTimer _statusTimer;
 
         public FrmLocalRAG()
         {
@@ -40,8 +41,8 @@ namespace WPFAIChat
                 Avatar = "🤖",
                 Role = "assistant",
                 Content = "Hello! I am your local RAG desktop assistant. Ask me questions about the documents you index in the vector database.",
-                BackgroundBrush = "#1e293b",
-                BorderBrush = "#334155",
+                BackgroundBrush = "#ffffff",
+                BorderBrush = "#e0e0e0",
                 SourcesVisibility = Visibility.Collapsed
             });
 
@@ -50,8 +51,56 @@ namespace WPFAIChat
 
         private async void FrmLocalRAG_Loaded(object sender, RoutedEventArgs e)
         {
+            await UpdateApiStatusAsync();
             await LoadConfigAsync();
             await LoadDocumentsAsync();
+
+            // Set up periodic API status checking (60 seconds for performance)
+            _statusTimer = new System.Windows.Threading.DispatcherTimer();
+            _statusTimer.Interval = TimeSpan.FromSeconds(60);
+            _statusTimer.Tick += StatusTimer_Tick;
+            _statusTimer.Start();
+        }
+
+        private async void StatusTimer_Tick(object sender, EventArgs e)
+        {
+            await UpdateApiStatusAsync();
+        }
+
+        private void MarkApiOnline()
+        {
+            ElpStatus.Fill = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#10b981"));
+            TxtStatus.Text = "Local API Online (Port 8000)";
+        }
+
+        private void MarkApiOffline()
+        {
+            ElpStatus.Fill = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#ef4444"));
+            TxtStatus.Text = "Local API Offline (Port 8000)";
+        }
+
+        private async Task UpdateApiStatusAsync()
+        {
+            bool isOnline = false;
+            try
+            {
+                // Ping the dedicated lightweight health endpoint
+                var response = await _httpClient.GetAsync(ApiBaseUrl + "health");
+                isOnline = response.IsSuccessStatusCode;
+            }
+            catch
+            {
+                isOnline = false;
+            }
+
+            if (isOnline)
+            {
+                MarkApiOnline();
+            }
+            else
+            {
+                MarkApiOffline();
+            }
         }
 
         // Navigation Menu tab switching
@@ -84,6 +133,53 @@ namespace WPFAIChat
 
         #region CONFIGURATION TAB (Settings)
 
+        private static string GetJsonString(JsonElement parent, string name, string defaultValue = "")
+        {
+            if (parent.TryGetProperty(name, out var prop))
+            {
+                if (prop.ValueKind == JsonValueKind.String)
+                    return prop.GetString() ?? defaultValue;
+                if (prop.ValueKind == JsonValueKind.Null)
+                    return defaultValue;
+                return prop.GetRawText();
+            }
+            return defaultValue;
+        }
+
+        private static int GetJsonInt(JsonElement parent, string name, int defaultValue = 0)
+        {
+            if (parent.TryGetProperty(name, out var prop))
+            {
+                if (prop.ValueKind == JsonValueKind.Number)
+                    return prop.GetInt32();
+                if (prop.ValueKind == JsonValueKind.String && int.TryParse(prop.GetString(), out var val))
+                    return val;
+            }
+            return defaultValue;
+        }
+
+        private static double GetJsonDouble(JsonElement parent, string name, double defaultValue = 0.0)
+        {
+            if (parent.TryGetProperty(name, out var prop))
+            {
+                if (prop.ValueKind == JsonValueKind.Number)
+                    return prop.GetDouble();
+                if (prop.ValueKind == JsonValueKind.String && double.TryParse(prop.GetString(), out var val))
+                    return val;
+            }
+            return defaultValue;
+        }
+
+        private static bool GetJsonBool(JsonElement parent, string name, bool defaultValue = false)
+        {
+            if (parent.TryGetProperty(name, out var prop))
+            {
+                if (prop.ValueKind == JsonValueKind.True) return true;
+                if (prop.ValueKind == JsonValueKind.False) return false;
+            }
+            return defaultValue;
+        }
+
         private async Task LoadConfigAsync()
         {
             try
@@ -91,55 +187,65 @@ namespace WPFAIChat
                 var response = await _httpClient.GetAsync(ApiBaseUrl + "config");
                 if (response.IsSuccessStatusCode)
                 {
+                    MarkApiOnline();
                     var json = await response.Content.ReadAsStringAsync();
                     using var doc = JsonDocument.Parse(json);
                     var root = doc.RootElement;
 
                     // Parse RAG
-                    var rag = root.GetProperty("rag");
-                    TxtChunkSize.Text = rag.GetProperty("chunk_size").GetInt32().ToString();
-                    TxtChunkOverlap.Text = rag.GetProperty("chunk_overlap").GetInt32().ToString();
-                    ChkHybridSearch.IsChecked = rag.GetProperty("use_hybrid_search").GetBoolean();
-                    
-                    bool useReranker = rag.GetProperty("use_reranker").GetBoolean();
-                    ChkReranker.IsChecked = useReranker;
-                    TxtRerankerModel.Text = rag.GetProperty("reranker_model").GetString();
-                    TxtTopK.Text = rag.GetProperty("top_k").GetInt32().ToString();
-                    TxtBaseK.Text = rag.GetProperty("base_retrieve_k").GetInt32().ToString();
+                    if (root.TryGetProperty("rag", out var rag))
+                    {
+                        TxtChunkSize.Text = GetJsonInt(rag, "chunk_size", 500).ToString();
+                        TxtChunkOverlap.Text = GetJsonInt(rag, "chunk_overlap", 50).ToString();
+                        ChkHybridSearch.IsChecked = GetJsonBool(rag, "use_hybrid_search", true);
+                        
+                        bool useReranker = GetJsonBool(rag, "use_reranker", true);
+                        ChkReranker.IsChecked = useReranker;
+                        TxtRerankerModel.Text = GetJsonString(rag, "reranker_model", "ms-marco-MiniLM-L-12-v2");
+                        TxtTopK.Text = GetJsonInt(rag, "top_k", 4).ToString();
+                        TxtBaseK.Text = GetJsonInt(rag, "base_retrieve_k", 12).ToString();
 
-                    PanelRerank.Visibility = useReranker ? Visibility.Visible : Visibility.Collapsed;
+                        PanelRerank.Visibility = useReranker ? Visibility.Visible : Visibility.Collapsed;
+                    }
 
                     // Parse LLM
-                    var llm = root.GetProperty("llm");
-                    TxtLlmUrl.Text = llm.GetProperty("api_url").GetString();
-                    TxtLlmModel.Text = llm.GetProperty("model_name").GetString();
-                    TxtLlmTemp.Text = llm.GetProperty("temperature").GetDouble().ToString("0.00");
-                    TxtLlmMaxTokens.Text = llm.GetProperty("max_tokens").GetInt32().ToString();
-                    TxtSystemPrompt.Text = llm.GetProperty("system_prompt").GetString();
+                    if (root.TryGetProperty("llm", out var llm))
+                    {
+                        TxtLlmUrl.Text = GetJsonString(llm, "api_url", "http://localhost:8080/v1");
+                        TxtLlmModel.Text = GetJsonString(llm, "model_name", "local-model");
+                        TxtLlmTemp.Text = GetJsonDouble(llm, "temperature", 0.1).ToString("0.00");
+                        TxtLlmMaxTokens.Text = GetJsonInt(llm, "max_tokens", 1024).ToString();
+                        TxtSystemPrompt.Text = GetJsonString(llm, "system_prompt");
+                    }
 
                     // Parse Embeddings & Qdrant
-                    var emb = root.GetProperty("embedding");
-                    TxtEmbModel.Text = emb.GetProperty("model_name").GetString();
-                    TxtSparseModel.Text = emb.GetProperty("sparse_model_name").GetString();
-                    
-                    string device = emb.GetProperty("device").GetString() ?? "cpu";
-                    foreach (ComboBoxItem item in CboEmbDevice.Items)
+                    if (root.TryGetProperty("embedding", out var emb))
                     {
-                        if (item.Content.ToString() == device)
+                        TxtEmbModel.Text = GetJsonString(emb, "model_name", "all-MiniLM-L6-v2");
+                        TxtSparseModel.Text = GetJsonString(emb, "sparse_model_name", "Qdrant/bm25");
+                        
+                        string device = GetJsonString(emb, "device", "cpu");
+                        foreach (ComboBoxItem item in CboEmbDevice.Items)
                         {
-                            CboEmbDevice.SelectedItem = item;
-                            break;
+                            if (item.Content.ToString() == device)
+                            {
+                                CboEmbDevice.SelectedItem = item;
+                                break;
+                            }
                         }
                     }
 
-                    var qdrant = root.GetProperty("qdrant");
-                    TxtQdrantCollection.Text = qdrant.GetProperty("collection_name").GetString();
-                    TxtQdrantPath.Text = qdrant.GetProperty("path").GetString();
-                    TxtQdrantUrl.Text = qdrant.GetProperty("url").GetString();
+                    if (root.TryGetProperty("qdrant", out var qdrant))
+                    {
+                        TxtQdrantCollection.Text = GetJsonString(qdrant, "collection_name", "local_rag_documents");
+                        TxtQdrantPath.Text = GetJsonString(qdrant, "path");
+                        TxtQdrantUrl.Text = GetJsonString(qdrant, "url", "http://localhost:6333");
+                    }
                 }
             }
             catch (Exception ex)
             {
+                MarkApiOffline();
                 MessageBox.Show($"Failed to load configuration: {ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }
@@ -153,7 +259,7 @@ namespace WPFAIChat
         private async void BtnSaveConfig_Click(object sender, RoutedEventArgs e)
         {
             TxtConfigStatus.Text = "⚙️ Saving configuration...";
-            TxtConfigStatus.Foreground = Brushes.Yellow;
+            TxtConfigStatus.Foreground = Brushes.DarkGoldenrod;
 
             try
             {
@@ -203,8 +309,9 @@ namespace WPFAIChat
 
                 if (response.IsSuccessStatusCode)
                 {
+                    MarkApiOnline();
                     TxtConfigStatus.Text = "✅ Configuration saved and hot-reloaded successfully!";
-                    TxtConfigStatus.Foreground = Brushes.LightGreen;
+                    TxtConfigStatus.Foreground = Brushes.Green;
                 }
                 else
                 {
@@ -215,6 +322,7 @@ namespace WPFAIChat
             }
             catch (Exception ex)
             {
+                MarkApiOffline();
                 TxtConfigStatus.Text = $"❌ Error: {ex.Message}";
                 TxtConfigStatus.Foreground = Brushes.Red;
             }
@@ -231,6 +339,7 @@ namespace WPFAIChat
                 var response = await _httpClient.GetAsync(ApiBaseUrl + "documents");
                 if (response.IsSuccessStatusCode)
                 {
+                    MarkApiOnline();
                     var json = await response.Content.ReadAsStringAsync();
                     using var doc = JsonDocument.Parse(json);
                     
@@ -247,6 +356,7 @@ namespace WPFAIChat
             }
             catch (Exception ex)
             {
+                MarkApiOffline();
                 Console.WriteLine($"Error loading documents: {ex.Message}");
             }
         }
@@ -278,6 +388,7 @@ namespace WPFAIChat
                     var response = await _httpClient.PostAsync(ApiBaseUrl + "upload", form);
                     if (response.IsSuccessStatusCode)
                     {
+                        MarkApiOnline();
                         Cursor = Cursors.Arrow;
                         await PollIngestionStatusAsync(fileName);
                     }
@@ -289,6 +400,7 @@ namespace WPFAIChat
                 }
                 catch (Exception ex)
                 {
+                    MarkApiOffline();
                     MessageBox.Show($"Upload error: {ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
                 }
                 finally
@@ -323,6 +435,7 @@ namespace WPFAIChat
                         continue;
                     }
 
+                    MarkApiOnline();
                     retries = 0; // Reset retries on successful status fetch
                     var json = await response.Content.ReadAsStringAsync();
                     using var doc = JsonDocument.Parse(json);
@@ -365,6 +478,7 @@ namespace WPFAIChat
             }
             catch (Exception ex)
             {
+                MarkApiOffline();
                 MessageBox.Show($"Error while monitoring ingestion status: {ex.Message}", "Connection Error", MessageBoxButton.OK, MessageBoxImage.Error);
             }
             finally
@@ -388,6 +502,7 @@ namespace WPFAIChat
                         var response = await _httpClient.DeleteAsync(ApiBaseUrl + $"documents/{fileName}");
                         if (response.IsSuccessStatusCode)
                         {
+                            MarkApiOnline();
                             await LoadDocumentsAsync();
                         }
                         else
@@ -398,6 +513,7 @@ namespace WPFAIChat
                     }
                     catch (Exception ex)
                     {
+                        MarkApiOffline();
                         MessageBox.Show($"Deletion error: {ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
                     }
                     finally
@@ -442,8 +558,8 @@ namespace WPFAIChat
                 Avatar = "👤",
                 Role = "user",
                 Content = question,
-                BackgroundBrush = "Transparent",
-                BorderBrush = "#1f2937",
+                BackgroundBrush = "#e2e2f6",
+                BorderBrush = "#c8c6e5",
                 SourcesVisibility = Visibility.Collapsed
             });
 
@@ -453,8 +569,8 @@ namespace WPFAIChat
                 Avatar = "🤖",
                 Role = "assistant",
                 Content = "",
-                BackgroundBrush = "#1e293b",
-                BorderBrush = "#334155",
+                BackgroundBrush = "#ffffff",
+                BorderBrush = "#e0e0e0",
                 SourcesVisibility = Visibility.Collapsed
             };
             _chatMessages.Add(assistantMsg);
@@ -481,6 +597,8 @@ namespace WPFAIChat
                     assistantMsg.Content = $"Error: API returned status {response.StatusCode}";
                     return;
                 }
+
+                MarkApiOnline();
 
                 using var stream = await response.Content.ReadAsStreamAsync();
                 using var reader = new StreamReader(stream);
@@ -559,6 +677,7 @@ namespace WPFAIChat
             }
             catch (Exception ex)
             {
+                MarkApiOffline();
                 assistantMsg.Content = $"⚠️ Connection Error: {ex.Message}";
             }
             finally

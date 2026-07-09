@@ -5,13 +5,13 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         mc:Ignorable="d"
         Title="LocalRAG Desktop Companion" Height="750" Width="1150"
-        WindowStartupLocation="CenterScreen" Background="#0f1115"
-        Foreground="#f3f4f6">
+        WindowStartupLocation="CenterScreen" Background="#f3f5f8"
+        Foreground="#242424">
 
     <Window.Resources>
         <!-- Modern Scrollbar styling -->
         <Style TargetType="ScrollBar">
-            <Setter Property="Background" Value="#1f2937"/>
+            <Setter Property="Background" Value="#f0f0f0"/>
             <Setter Property="BorderBrush" Value="Transparent"/>
         </Style>
 
@@ -28,11 +28,12 @@
                         </Border>
                         <ControlTemplate.Triggers>
                             <Trigger Property="IsChecked" Value="True">
-                                <Setter TargetName="border" Property="Background" Value="#2563eb"/>
+                                <Setter TargetName="border" Property="Background" Value="#5b5fc7"/>
                                 <Setter Property="Foreground" Value="White"/>
                             </Trigger>
                             <Trigger Property="IsMouseOver" Value="True">
-                                <Setter TargetName="border" Property="Background" Value="#374151"/>
+                                <Setter TargetName="border" Property="Background" Value="#e1e1f2"/>
+                                <Setter Property="Foreground" Value="#5b5fc7"/>
                             </Trigger>
                             <MultiTrigger>
                                 <MultiTrigger.Conditions>
@@ -40,14 +41,15 @@
                                     <Condition Property="IsChecked" Value="True"/>
                                 </MultiTrigger.Conditions>
                                 <MultiTrigger.Setters>
-                                    <Setter TargetName="border" Property="Background" Value="#2563eb"/>
+                                    <Setter TargetName="border" Property="Background" Value="#5b5fc7"/>
+                                    <Setter Property="Foreground" Value="White"/>
                                 </MultiTrigger.Setters>
                             </MultiTrigger>
                         </ControlTemplate.Triggers>
                     </ControlTemplate>
                 </Setter.Value>
             </Setter>
-            <Setter Property="Foreground" Value="#9ca3af"/>
+            <Setter Property="Foreground" Value="#242424"/>
             <Setter Property="FontSize" Value="14"/>
             <Setter Property="Cursor" Value="Hand"/>
             <Setter Property="GroupName" Value="Navigation"/>
@@ -63,7 +65,7 @@
         </Grid.ColumnDefinitions>
 
         <!-- Sidebar Background -->
-        <Border Grid.Column="0" Background="#111317" BorderBrush="#1f2937" BorderThickness="0,0,1,0">
+        <Border Grid.Column="0" Background="#f0f0f5" BorderBrush="#e0e0e0" BorderThickness="0,0,1,0">
             <Grid Margin="16">
                 <Grid.RowDefinitions>
                     <RowDefinition Height="Auto"/>
@@ -75,8 +77,8 @@
                 <StackPanel Grid.Row="0" Orientation="Horizontal" Margin="0,10,0,30">
                     <TextBlock Text="🎛️" FontSize="26" VerticalAlignment="Center" Margin="0,0,10,0"/>
                     <StackPanel>
-                        <TextBlock Text="LocalRAG" FontSize="18" FontWeight="Bold" Foreground="White"/>
-                        <TextBlock Text="Private Local Knowledge" FontSize="11" Foreground="#9ca3af"/>
+                        <TextBlock Text="LocalRAG" FontSize="18" FontWeight="Bold" Foreground="#242424"/>
+                        <TextBlock Text="Private Local Knowledge" FontSize="11" Foreground="#5f5f5f"/>
                     </StackPanel>
                 </StackPanel>
 
@@ -89,8 +91,8 @@
 
                 <!-- Footer indicating status -->
                 <StackPanel Grid.Row="2" Orientation="Horizontal" Margin="0,10,0,10">
-                    <Ellipse Width="10" Height="10" Fill="#10b981" Margin="0,0,8,0" VerticalAlignment="Center"/>
-                    <TextBlock Text="Local API (Port 8000)" FontSize="12" Foreground="#9ca3af" VerticalAlignment="Center"/>
+                    <Ellipse x:Name="ElpStatus" Width="10" Height="10" Fill="#ef4444" Margin="0,0,8,0" VerticalAlignment="Center"/>
+                    <TextBlock x:Name="TxtStatus" Text="Connecting to API..." FontSize="12" Foreground="#5f5f5f" VerticalAlignment="Center"/>
                 </StackPanel>
             </Grid>
         </Border>
@@ -103,21 +105,21 @@
             </Grid.RowDefinitions>
 
             <!-- Main Header -->
-            <Border Grid.Row="0" BorderBrush="#1f2937" BorderThickness="0,0,0,1" Padding="20,0">
+            <Border Grid.Row="0" BorderBrush="#e0e0e0" BorderThickness="0,0,0,1" Padding="20,0" Background="#ffffff">
                 <Grid>
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="*"/>
                         <ColumnDefinition Width="Auto"/>
                     </Grid.ColumnDefinitions>
 
-                    <TextBlock x:Name="TxtHeaderTitle" Text="Semantic Search &amp; Chat" FontSize="18" FontWeight="SemiBold" Foreground="White" VerticalAlignment="Center"/>
+                    <TextBlock x:Name="TxtHeaderTitle" Text="Semantic Search &amp; Chat" FontSize="18" FontWeight="SemiBold" Foreground="#242424" VerticalAlignment="Center"/>
 
                     <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
-                        <Border Background="#1e293b" CornerRadius="4" Padding="8,4" Margin="0,0,8,0">
-                            <TextBlock Text="GGUF Inference" FontSize="11" Foreground="#9ca3af" FontWeight="SemiBold"/>
+                        <Border Background="#e8e8f8" CornerRadius="4" Padding="8,4" Margin="0,0,8,0">
+                            <TextBlock Text="GGUF Inference" FontSize="11" Foreground="#5b5fc7" FontWeight="SemiBold"/>
                         </Border>
-                        <Border Background="#1e293b" CornerRadius="4" Padding="8,4">
-                            <TextBlock Text="Qdrant Server" FontSize="11" Foreground="#9ca3af" FontWeight="SemiBold"/>
+                        <Border Background="#e8e8f8" CornerRadius="4" Padding="8,4">
+                            <TextBlock Text="Qdrant Server" FontSize="11" Foreground="#5b5fc7" FontWeight="SemiBold"/>
                         </Border>
                     </StackPanel>
                 </Grid>
@@ -147,14 +149,14 @@
                                             </Grid.ColumnDefinitions>
                                             <TextBlock Text="{Binding Avatar}" FontSize="18" Margin="0,0,12,0" VerticalAlignment="Top"/>
                                             <StackPanel Grid.Column="1">
-                                                <TextBlock Text="{Binding Content}" FontSize="14" Foreground="White" TextWrapping="Wrap"/>
+                                                <TextBlock Text="{Binding Content}" FontSize="14" Foreground="#242424" TextWrapping="Wrap"/>
                                                 <!-- Sources display container -->
                                                 <ItemsControl ItemsSource="{Binding Sources}" Margin="0,10,0,0" Visibility="{Binding SourcesVisibility}">
                                                     <ItemsControl.ItemTemplate>
                                                         <DataTemplate>
-                                                            <Expander Header="{Binding SummaryText}" Foreground="#60a5fa" FontSize="12" Margin="0,4" HorizontalAlignment="Left" Width="600">
-                                                                <Border Background="#1f2937" Padding="10" CornerRadius="6" BorderThickness="1" BorderBrush="#374151" Margin="0,2">
-                                                                    <TextBlock Text="{Binding Content}" FontSize="12" Foreground="#d1d5db" TextWrapping="Wrap"/>
+                                                            <Expander Header="{Binding SummaryText}" Foreground="#5b5fc7" FontSize="12" Margin="0,4" HorizontalAlignment="Left" Width="600">
+                                                                <Border Background="#f3f2f1" Padding="10" CornerRadius="6" BorderThickness="1" BorderBrush="#e0e0e0" Margin="0,2">
+                                                                    <TextBlock Text="{Binding Content}" FontSize="12" Foreground="#242424" TextWrapping="Wrap"/>
                                                                 </Border>
                                                             </Expander>
                                                         </DataTemplate>
@@ -169,22 +171,22 @@
                     </ScrollViewer>
 
                     <!-- Loader indicating "thinking..." -->
-                    <Border Grid.Row="1" Background="#1e293b" CornerRadius="8" Padding="12,8" HorizontalAlignment="Left" Margin="0,0,0,10" x:Name="BdrLoader" Visibility="Collapsed">
+                    <Border Grid.Row="1" Background="#e8e8f8" CornerRadius="8" Padding="12,8" HorizontalAlignment="Left" Margin="0,0,0,10" x:Name="BdrLoader" Visibility="Collapsed">
                         <StackPanel Orientation="Horizontal">
                             <ProgressBar Width="50" Height="10" IsIndeterminate="True" Margin="0,0,8,0"/>
-                            <TextBlock Text="Thinking and searching context..." Foreground="#60a5fa" VerticalAlignment="Center" FontSize="12"/>
+                            <TextBlock Text="Thinking and searching context..." Foreground="#5b5fc7" VerticalAlignment="Center" FontSize="12"/>
                         </StackPanel>
                     </Border>
 
                     <!-- Input textbox area -->
-                    <Border Grid.Row="2" CornerRadius="10" Background="#1f2937" BorderThickness="1" BorderBrush="#374151" Padding="8">
+                    <Border Grid.Row="2" CornerRadius="10" Background="#ffffff" BorderThickness="1" BorderBrush="#e0e0e0" Padding="8">
                         <Grid>
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="*"/>
                                 <ColumnDefinition Width="80"/>
                             </Grid.ColumnDefinitions>
-                            <TextBox x:Name="TxtInput" Background="Transparent" BorderThickness="0" Foreground="White" CaretBrush="White" FontSize="14" Padding="8,4" VerticalAlignment="Center" KeyDown="TxtInput_KeyDown" MinHeight="30" TextWrapping="Wrap" AcceptsReturn="False"/>
-                            <Button Grid.Column="1" Content="Send" x:Name="BtnSend" Click="BtnSend_Click" Background="#2563eb" Foreground="White" BorderThickness="0" Cursor="Hand" Height="32" VerticalAlignment="Center">
+                            <TextBox x:Name="TxtInput" Background="Transparent" BorderThickness="0" Foreground="#242424" CaretBrush="#242424" FontSize="14" Padding="8,4" VerticalAlignment="Center" KeyDown="TxtInput_KeyDown" MinHeight="30" TextWrapping="Wrap" AcceptsReturn="False"/>
+                            <Button Grid.Column="1" Content="Send" x:Name="BtnSend" Click="BtnSend_Click" Background="#5b5fc7" Foreground="White" BorderThickness="0" Cursor="Hand" Height="32" VerticalAlignment="Center">
                                 <Button.Resources>
                                     <Style TargetType="Border">
                                         <Setter Property="CornerRadius" Value="6"/>
@@ -203,12 +205,12 @@
                     </Grid.RowDefinitions>
 
                     <!-- Upload Box Panel -->
-                    <Border Grid.Row="0" BorderBrush="#374151" BorderThickness="2" CornerRadius="12" Background="#1e293b" Padding="30" Margin="0,0,0,20">
+                    <Border Grid.Row="0" BorderBrush="#e0e0e0" BorderThickness="1" CornerRadius="12" Background="#ffffff" Padding="30" Margin="0,0,0,20">
                         <StackPanel HorizontalAlignment="Center">
                             <TextBlock Text="☁️" FontSize="36" HorizontalAlignment="Center" Margin="0,0,0,10"/>
-                            <TextBlock Text="Upload Documents to Vector Index" FontSize="15" FontWeight="SemiBold" Foreground="White" HorizontalAlignment="Center" Margin="0,0,0,5"/>
-                            <TextBlock Text="Supports PDF, TXT, DOC, DOCX up to 10MB" FontSize="11" Foreground="#9ca3af" HorizontalAlignment="Center" Margin="0,0,0,15"/>
-                            <Button Content="Choose File" x:Name="BtnUpload" Click="BtnUpload_Click" Background="#2563eb" Foreground="White" BorderThickness="0" Padding="16,8" Cursor="Hand" HorizontalAlignment="Center">
+                            <TextBlock Text="Upload Documents to Vector Index" FontSize="15" FontWeight="SemiBold" Foreground="#242424" HorizontalAlignment="Center" Margin="0,0,0,5"/>
+                            <TextBlock Text="Supports PDF, TXT, DOC, DOCX up to 10MB" FontSize="11" Foreground="#5f5f5f" HorizontalAlignment="Center" Margin="0,0,0,15"/>
+                            <Button Content="Choose File" x:Name="BtnUpload" Click="BtnUpload_Click" Background="#5b5fc7" Foreground="White" BorderThickness="0" Padding="16,8" Cursor="Hand" HorizontalAlignment="Center">
                                 <Button.Resources>
                                     <Style TargetType="Border">
                                         <Setter Property="CornerRadius" Value="6"/>
@@ -217,7 +219,7 @@
                             </Button>
                             
                             <ProgressBar x:Name="PrgUpload" Minimum="0" Maximum="100" Height="10" Width="400" Margin="0,15,0,5" Visibility="Collapsed"/>
-                            <TextBlock x:Name="TxtUploadProgress" Text="" FontSize="12" Foreground="#60a5fa" HorizontalAlignment="Center" Visibility="Collapsed"/>
+                            <TextBlock x:Name="TxtUploadProgress" Text="" FontSize="12" Foreground="#5b5fc7" HorizontalAlignment="Center" Visibility="Collapsed"/>
                         </StackPanel>
                     </Border>
 
@@ -228,9 +230,9 @@
                             <RowDefinition Height="*"/>
                         </Grid.RowDefinitions>
                         
-                        <TextBlock Text="Indexed Files Registry" FontSize="14" FontWeight="SemiBold" Foreground="White" Margin="0,0,0,10"/>
+                        <TextBlock Text="Indexed Files Registry" FontSize="14" FontWeight="SemiBold" Foreground="#242424" Margin="0,0,0,10"/>
 
-                        <ListView Grid.Row="1" x:Name="LstDocuments" Background="Transparent" BorderThickness="1" BorderBrush="#1f2937" Foreground="White">
+                        <ListView Grid.Row="1" x:Name="LstDocuments" Background="#ffffff" BorderThickness="1" BorderBrush="#e0e0e0" Foreground="#242424">
                             <ListView.View>
                                 <GridView>
                                     <GridViewColumn Header="File Name" DisplayMemberBinding="{Binding FileName}" Width="450"/>
@@ -253,7 +255,7 @@
                             <ListView.ItemContainerStyle>
                                 <Style TargetType="ListViewItem">
                                     <Setter Property="Background" Value="Transparent"/>
-                                    <Setter Property="BorderBrush" Value="#1f2937"/>
+                                    <Setter Property="BorderBrush" Value="#e0e0e0"/>
                                     <Setter Property="BorderThickness" Value="0,0,0,1"/>
                                     <Setter Property="Padding" Value="10"/>
                                     <Setter Property="Margin" Value="0"/>
@@ -275,10 +277,10 @@
                         <UniformGrid Columns="2" VerticalAlignment="Top" Grid.Row="0">
                             
                             <!-- Card 1: RAG Params -->
-                            <Border Background="#1e293b" BorderBrush="#374151" BorderThickness="1" CornerRadius="12" Padding="20" Margin="10">
+                            <Border Background="#ffffff" BorderBrush="#e0e0e0" BorderThickness="1" CornerRadius="12" Padding="20" Margin="10">
                                 <StackPanel>
-                                    <TextBlock Text="RAG Partitioning &amp; Retrieval" FontSize="15" FontWeight="SemiBold" Foreground="White" Margin="0,0,0,4"/>
-                                    <TextBlock Text="Modify file splits and search constraints." FontSize="11" Foreground="#9ca3af" Margin="0,0,0,15"/>
+                                    <TextBlock Text="RAG Partitioning &amp; Retrieval" FontSize="15" FontWeight="SemiBold" Foreground="#242424" Margin="0,0,0,4"/>
+                                    <TextBlock Text="Modify file splits and search constraints." FontSize="11" Foreground="#5f5f5f" Margin="0,0,0,15"/>
 
                                     <Grid Margin="0,0,0,10">
                                         <Grid.ColumnDefinitions>
@@ -286,21 +288,21 @@
                                             <ColumnDefinition Width="*"/>
                                         </Grid.ColumnDefinitions>
                                         <StackPanel Margin="0,0,5,0">
-                                            <Label Content="Chunk Size (Char)" Foreground="#9ca3af" FontSize="11"/>
-                                            <TextBox x:Name="TxtChunkSize" Background="#1f2937" Foreground="White" BorderBrush="#374151" Padding="6"/>
+                                            <Label Content="Chunk Size (Char)" Foreground="#5f5f5f" FontSize="11"/>
+                                            <TextBox x:Name="TxtChunkSize" Background="#ffffff" Foreground="#242424" BorderBrush="#d1d5db" Padding="6"/>
                                         </StackPanel>
                                         <StackPanel Grid.Column="1" Margin="5,0,0,0">
-                                            <Label Content="Chunk Overlap (Char)" Foreground="#9ca3af" FontSize="11"/>
-                                            <TextBox x:Name="TxtChunkOverlap" Background="#1f2937" Foreground="White" BorderBrush="#374151" Padding="6"/>
+                                            <Label Content="Chunk Overlap (Char)" Foreground="#5f5f5f" FontSize="11"/>
+                                            <TextBox x:Name="TxtChunkOverlap" Background="#ffffff" Foreground="#242424" BorderBrush="#d1d5db" Padding="6"/>
                                         </StackPanel>
                                     </Grid>
 
-                                    <CheckBox x:Name="ChkHybridSearch" Content="Enable Hybrid Search (Dense + BM25)" Foreground="White" Margin="0,10" VerticalContentAlignment="Center"/>
-                                    <CheckBox x:Name="ChkReranker" Content="Enable FlashRank Reranker" Foreground="White" Margin="0,5" VerticalContentAlignment="Center" Checked="ChkReranker_StateChanged" Unchecked="ChkReranker_StateChanged"/>
+                                    <CheckBox x:Name="ChkHybridSearch" Content="Enable Hybrid Search (Dense + BM25)" Foreground="#242424" Margin="0,10" VerticalContentAlignment="Center"/>
+                                    <CheckBox x:Name="ChkReranker" Content="Enable FlashRank Reranker" Foreground="#242424" Margin="0,5" VerticalContentAlignment="Center" Checked="ChkReranker_StateChanged" Unchecked="ChkReranker_StateChanged"/>
 
                                     <StackPanel x:Name="PanelRerank" Margin="0,10,0,0" Visibility="Visible">
-                                        <Label Content="Rerank Model Name" Foreground="#9ca3af" FontSize="11"/>
-                                        <TextBox x:Name="TxtRerankerModel" Background="#1f2937" Foreground="White" BorderBrush="#374151" Padding="6" Margin="0,0,0,10"/>
+                                        <Label Content="Rerank Model Name" Foreground="#5f5f5f" FontSize="11"/>
+                                        <TextBox x:Name="TxtRerankerModel" Background="#ffffff" Foreground="#242424" BorderBrush="#d1d5db" Padding="6" Margin="0,0,0,10"/>
                                         
                                         <Grid>
                                             <Grid.ColumnDefinitions>
@@ -308,12 +310,12 @@
                                                 <ColumnDefinition Width="*"/>
                                             </Grid.ColumnDefinitions>
                                             <StackPanel Margin="0,0,5,0">
-                                                <Label Content="Final Top K Chunks" Foreground="#9ca3af" FontSize="11"/>
-                                                <TextBox x:Name="TxtTopK" Background="#1f2937" Foreground="White" BorderBrush="#374151" Padding="6"/>
+                                                <Label Content="Final Top K Chunks" Foreground="#5f5f5f" FontSize="11"/>
+                                                <TextBox x:Name="TxtTopK" Background="#ffffff" Foreground="#242424" BorderBrush="#d1d5db" Padding="6"/>
                                             </StackPanel>
                                             <StackPanel Grid.Column="1" Margin="5,0,0,0">
-                                                <Label Content="Base Pre-Rerank K" Foreground="#9ca3af" FontSize="11"/>
-                                                <TextBox x:Name="TxtBaseK" Background="#1f2937" Foreground="White" BorderBrush="#374151" Padding="6"/>
+                                                <Label Content="Base Pre-Rerank K" Foreground="#5f5f5f" FontSize="11"/>
+                                                <TextBox x:Name="TxtBaseK" Background="#ffffff" Foreground="#242424" BorderBrush="#d1d5db" Padding="6"/>
                                             </StackPanel>
                                         </Grid>
                                     </StackPanel>
@@ -321,16 +323,16 @@
                             </Border>
 
                             <!-- Card 2: Local LLM Endpoint Params -->
-                            <Border Background="#1e293b" BorderBrush="#374151" BorderThickness="1" CornerRadius="12" Padding="20" Margin="10">
+                            <Border Background="#ffffff" BorderBrush="#e0e0e0" BorderThickness="1" CornerRadius="12" Padding="20" Margin="10">
                                 <StackPanel>
-                                    <TextBlock Text="Local LLM Inference Engine" FontSize="15" FontWeight="SemiBold" Foreground="White" Margin="0,0,0,4"/>
-                                    <TextBlock Text="Customize endpoint locations and tokens." FontSize="11" Foreground="#9ca3af" Margin="0,0,0,15"/>
+                                    <TextBlock Text="Local LLM Inference Engine" FontSize="15" FontWeight="SemiBold" Foreground="#242424" Margin="0,0,0,4"/>
+                                    <TextBlock Text="Customize endpoint locations and tokens." FontSize="11" Foreground="#5f5f5f" Margin="0,0,0,15"/>
 
-                                    <Label Content="LLM API Base URL" Foreground="#9ca3af" FontSize="11"/>
-                                    <TextBox x:Name="TxtLlmUrl" Background="#1f2937" Foreground="White" BorderBrush="#374151" Padding="6" Margin="0,0,0,10"/>
+                                    <Label Content="LLM API Base URL" Foreground="#5f5f5f" FontSize="11"/>
+                                    <TextBox x:Name="TxtLlmUrl" Background="#ffffff" Foreground="#242424" BorderBrush="#d1d5db" Padding="6" Margin="0,0,0,10"/>
 
-                                    <Label Content="LLM Model Name ID" Foreground="#9ca3af" FontSize="11"/>
-                                    <TextBox x:Name="TxtLlmModel" Background="#1f2937" Foreground="White" BorderBrush="#374151" Padding="6" Margin="0,0,0,10"/>
+                                    <Label Content="LLM Model Name ID" Foreground="#5f5f5f" FontSize="11"/>
+                                    <TextBox x:Name="TxtLlmModel" Background="#ffffff" Foreground="#242424" BorderBrush="#d1d5db" Padding="6" Margin="0,0,0,10"/>
 
                                     <Grid>
                                         <Grid.ColumnDefinitions>
@@ -338,38 +340,38 @@
                                             <ColumnDefinition Width="*"/>
                                         </Grid.ColumnDefinitions>
                                         <StackPanel Margin="0,0,5,0">
-                                            <Label Content="Temperature" Foreground="#9ca3af" FontSize="11"/>
-                                            <TextBox x:Name="TxtLlmTemp" Background="#1f2937" Foreground="White" BorderBrush="#374151" Padding="6"/>
+                                            <Label Content="Temperature" Foreground="#5f5f5f" FontSize="11"/>
+                                            <TextBox x:Name="TxtLlmTemp" Background="#ffffff" Foreground="#242424" BorderBrush="#d1d5db" Padding="6"/>
                                         </StackPanel>
                                         <StackPanel Grid.Column="1" Margin="5,0,0,0">
-                                            <Label Content="Max Gen Tokens" Foreground="#9ca3af" FontSize="11"/>
-                                            <TextBox x:Name="TxtLlmMaxTokens" Background="#1f2937" Foreground="White" BorderBrush="#374151" Padding="6"/>
+                                            <Label Content="Max Gen Tokens" Foreground="#5f5f5f" FontSize="11"/>
+                                            <TextBox x:Name="TxtLlmMaxTokens" Background="#ffffff" Foreground="#242424" BorderBrush="#d1d5db" Padding="6"/>
                                         </StackPanel>
                                     </Grid>
                                 </StackPanel>
                             </Border>
 
                             <!-- Card 3: Embeddings & Vector DB Settings -->
-                            <Border Background="#1e293b" BorderBrush="#374151" BorderThickness="1" CornerRadius="12" Padding="20" Margin="10">
+                            <Border Background="#ffffff" BorderBrush="#e0e0e0" BorderThickness="1" CornerRadius="12" Padding="20" Margin="10">
                                 <StackPanel>
-                                    <TextBlock Text="Embedding &amp; Vector Database" FontSize="15" FontWeight="SemiBold" Foreground="White" Margin="0,0,0,4"/>
-                                    <TextBlock Text="Configure Vector store settings and devices." FontSize="11" Foreground="#9ca3af" Margin="0,0,0,15"/>
+                                    <TextBlock Text="Embedding &amp; Vector Database" FontSize="15" FontWeight="SemiBold" Foreground="#242424" Margin="0,0,0,4"/>
+                                    <TextBlock Text="Configure Vector store settings and devices." FontSize="11" Foreground="#5f5f5f" Margin="0,0,0,15"/>
 
-                                    <Label Content="Dense Embedding Model" Foreground="#9ca3af" FontSize="11"/>
-                                    <TextBox x:Name="TxtEmbModel" Background="#1f2937" Foreground="White" BorderBrush="#374151" Padding="6" Margin="0,0,0,10"/>
+                                    <Label Content="Dense Embedding Model" Foreground="#5f5f5f" FontSize="11"/>
+                                    <TextBox x:Name="TxtEmbModel" Background="#ffffff" Foreground="#242424" BorderBrush="#d1d5db" Padding="6" Margin="0,0,0,10"/>
 
-                                    <Label Content="Sparse Embedding Model" Foreground="#9ca3af" FontSize="11"/>
-                                    <TextBox x:Name="TxtSparseModel" Background="#1f2937" Foreground="White" BorderBrush="#374151" Padding="6" Margin="0,0,0,10"/>
+                                    <Label Content="Sparse Embedding Model" Foreground="#5f5f5f" FontSize="11"/>
+                                    <TextBox x:Name="TxtSparseModel" Background="#ffffff" Foreground="#242424" BorderBrush="#d1d5db" Padding="6" Margin="0,0,0,10"/>
 
-                                    <Label Content="Embedding Device" Foreground="#9ca3af" FontSize="11"/>
-                                    <ComboBox x:Name="CboEmbDevice" Background="#1f2937" BorderBrush="#374151" Margin="0,0,0,10" Height="30">
+                                    <Label Content="Embedding Device" Foreground="#5f5f5f" FontSize="11"/>
+                                    <ComboBox x:Name="CboEmbDevice" Background="#ffffff" Foreground="#242424" BorderBrush="#d1d5db" Margin="0,0,0,10" Height="30">
                                         <ComboBoxItem Content="cpu"/>
                                         <ComboBoxItem Content="cuda"/>
                                         <ComboBoxItem Content="mps"/>
                                     </ComboBox>
 
-                                    <Label Content="Qdrant Collection Name" Foreground="#9ca3af" FontSize="11"/>
-                                    <TextBox x:Name="TxtQdrantCollection" Background="#1f2937" Foreground="White" BorderBrush="#374151" Padding="6" Margin="0,0,0,10"/>
+                                    <Label Content="Qdrant Collection Name" Foreground="#5f5f5f" FontSize="11"/>
+                                    <TextBox x:Name="TxtQdrantCollection" Background="#ffffff" Foreground="#242424" BorderBrush="#d1d5db" Padding="6" Margin="0,0,0,10"/>
 
                                     <Grid>
                                         <Grid.ColumnDefinitions>
@@ -377,24 +379,24 @@
                                             <ColumnDefinition Width="*"/>
                                         </Grid.ColumnDefinitions>
                                         <StackPanel Margin="0,0,5,0">
-                                            <Label Content="Local Path" Foreground="#9ca3af" FontSize="11"/>
-                                            <TextBox x:Name="TxtQdrantPath" Background="#1f2937" Foreground="White" BorderBrush="#374151" Padding="6"/>
+                                            <Label Content="Local Path" Foreground="#5f5f5f" FontSize="11"/>
+                                            <TextBox x:Name="TxtQdrantPath" Background="#ffffff" Foreground="#242424" BorderBrush="#d1d5db" Padding="6"/>
                                         </StackPanel>
                                         <StackPanel Grid.Column="1" Margin="5,0,0,0">
-                                            <Label Content="Server URL" Foreground="#9ca3af" FontSize="11"/>
-                                            <TextBox x:Name="TxtQdrantUrl" Background="#1f2937" Foreground="White" BorderBrush="#374151" Padding="6"/>
+                                            <Label Content="Server URL" Foreground="#5f5f5f" FontSize="11"/>
+                                            <TextBox x:Name="TxtQdrantUrl" Background="#ffffff" Foreground="#242424" BorderBrush="#d1d5db" Padding="6"/>
                                         </StackPanel>
                                     </Grid>
                                 </StackPanel>
                             </Border>
 
                             <!-- Card 4: System Prompt Template (Spans across) -->
-                            <Border Background="#1e293b" BorderBrush="#374151" BorderThickness="1" CornerRadius="12" Padding="20" Margin="10">
+                            <Border Background="#ffffff" BorderBrush="#e0e0e0" BorderThickness="1" CornerRadius="12" Padding="20" Margin="10">
                                 <StackPanel>
-                                    <TextBlock Text="System Instruction Template" FontSize="15" FontWeight="SemiBold" Foreground="White" Margin="0,0,0,4"/>
-                                    <TextBlock Text="Customize context framing. Must include {context} and {question} placeholders." FontSize="11" Foreground="#9ca3af" Margin="0,0,0,15"/>
+                                    <TextBlock Text="System Instruction Template" FontSize="15" FontWeight="SemiBold" Foreground="#242424" Margin="0,0,0,4"/>
+                                    <TextBlock Text="Customize context framing. Must include {context} and {question} placeholders." FontSize="11" Foreground="#5f5f5f" Margin="0,0,0,15"/>
 
-                                    <TextBox x:Name="TxtSystemPrompt" Background="#1f2937" Foreground="White" BorderBrush="#374151" Padding="6" TextWrapping="Wrap" AcceptsReturn="True" Height="200" VerticalScrollBarVisibility="Auto" FontFamily="Consolas"/>
+                                    <TextBox x:Name="TxtSystemPrompt" Background="#ffffff" Foreground="#242424" BorderBrush="#d1d5db" Padding="6" TextWrapping="Wrap" AcceptsReturn="True" Height="200" VerticalScrollBarVisibility="Auto" FontFamily="Consolas"/>
                                 </StackPanel>
                             </Border>
                         </UniformGrid>
@@ -402,7 +404,7 @@
                         <!-- Save Status and Button -->
                         <StackPanel Grid.Row="1" Margin="10">
                             <TextBlock x:Name="TxtConfigStatus" Text="" FontSize="13" Margin="0,0,0,10"/>
-                            <Button Content="Save Configuration" x:Name="BtnSaveConfig" Click="BtnSaveConfig_Click" Background="#2563eb" Foreground="White" BorderThickness="0" Padding="24,12" Cursor="Hand" FontSize="14" FontWeight="SemiBold">
+                            <Button Content="Save Configuration" x:Name="BtnSaveConfig" Click="BtnSaveConfig_Click" Background="#5b5fc7" Foreground="White" BorderThickness="0" Padding="24,12" Cursor="Hand" FontSize="14" FontWeight="SemiBold">
                                 <Button.Resources>
                                     <Style TargetType="Border">
                                         <Setter Property="CornerRadius" Value="6"/>
