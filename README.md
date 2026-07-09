@@ -402,9 +402,9 @@ This script:
 - [x] A test benchmark evaluation suite for the RAG pipeline and local models
 
 ### Phase 4 - Production
-- [ ] Multi-user support
+- [ ] Multi-user support - The end goal with be to switch to using either SGLang or vLLM (vLLM better for use case). However, these two llm serving framework doesn't support AMD GPU on Windows so can't mess around with it yet.
 - [ ] Authentication
-- [ ] Docker deployment
+- [x] Docker deployment - kinda
 - [ ] Monitoring
 
 ---
