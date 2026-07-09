@@ -28,6 +28,8 @@ Some random ideas for future exploration:
 
 ## Architecture
 
+![Overall Pipeline Diagram](assets/rag_pipeline_diagram.png)
+
 ```text
 User
  │
@@ -341,9 +343,9 @@ A fully local, premium-designed RAG (Retrieval-Augmented Generation) dashboard w
    .\install.ps1
    ```
 2. **Start the local LLM**:
-   Launch `llama-server` with embedding support enabled (i.e. using the `--embedding` flag).
-3. **Launch the servers**:
-   Run the startup script:
+   Launch `llama-server` with embedding support enabled (e.g., using `.\startLocalLLM.ps1` in the `LocalLLM` folder).
+3. **Launch the RAG subsystem & database**:
+   Run the startup orchestrator. This will automatically check and start the Docker Compose stack (Qdrant, Prometheus, and Grafana), launch the backend, and open the React dashboard:
    ```powershell
    .\start_rag.ps1
    ```

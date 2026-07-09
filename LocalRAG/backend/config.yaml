@@ -10,14 +10,15 @@ rag:
   rerank_top_k: 4            # Number of final chunks passed to LLM
   base_retrieve_k: 12        # Chunks fetched before reranking
 
+# embedding using cpu for now, there's no AMD GPU support for Windows yet...
 embedding:
   model_name: "all-MiniLM-L6-v2"
   sparse_model_name: "Qdrant/bm25"
   device: "cpu"  # cpu, cuda, or mps
 
 qdrant:
-  path: "qdrant_db"  # Local folder path for disk-based storage. If empty and url is set, connects to remote server.
-  url: ""            # Optional remote/Docker Qdrant server URL, e.g., http://localhost:6333
+  path: ""  # Local folder path for disk-based storage. If empty and url is set, connects to remote server.
+  url: "http://localhost:6333"            # Optional remote/Docker Qdrant server URL, e.g., http://localhost:6333
   collection_name: "local_rag_documents"
 
 llm:
@@ -26,12 +27,12 @@ llm:
   temperature: 0.1
   max_tokens: 1024
   system_prompt: |
-    You are a helpful local AI assistant. Answer the user's question using only the provided context blocks below.
+    You are a helpful local AI assistant. Answer the user's question using the provided context blocks below.
     
     Rules:
-    1. If the provided context is insufficient or doesn't contain the answer to the question, respond with exactly: "I do not have enough information to answer this question."
-    2. Rely only on the clear facts mentioned in the context. Do not make up facts, do not extrapolate, and do not use outside knowledge.
-    3. Be concise and factual.
+    1. If the provided context is insufficient, ambiguous, or does not contain enough information to fully answer the question, do not make up facts. Instead, ask the user clarifying questions relating to their prompt to gather more details.
+    2. Rely only on the clear facts mentioned in the context. Do not extrapolate, and do not use outside knowledge.
+    3. Be concise, factual, and helpful.
 
     Context:
     ---

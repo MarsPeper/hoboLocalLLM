@@ -59,7 +59,7 @@ Make sure you have the following installed on your Windows machine:
 ### 1. Run the Installer
 Open PowerShell, navigate to the `LocalRAG` directory, and execute the installer script:
 ```powershell
-cd C:\Projects\hoboLocalLLM\LocalRAG
+cd LocalRAG
 .\install.ps1
 ```
 This script will:
@@ -88,7 +88,7 @@ In your PowerShell console inside the `LocalRAG` directory, run:
 ```powershell
 .\start_rag.ps1
 ```
-This will start the FastAPI backend, launch the Vite React dev server, and open your browser to `http://localhost:5173`.
+This will automatically verify and start the Docker Compose stack (Qdrant, Prometheus, Grafana), start the FastAPI backend, launch the Vite React dev server, and open your browser to the dashboard at `http://localhost:5173`.
 
 ---
 

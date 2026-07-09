@@ -4,10 +4,11 @@ import json
 import shutil
 import logging
 from typing import List, Dict, Any, Optional
-from fastapi import FastAPI, UploadFile, File, HTTPException
+from fastapi import FastAPI, UploadFile, File, HTTPException, BackgroundTasks
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
+from prometheus_fastapi_instrumentator import Instrumentator
 
 # Import pipeline components
 from document_processor import process_document
@@ -35,6 +36,9 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+# Instrument the FastAPI app for Prometheus monitoring and expose /metrics endpoint
+Instrumentator().instrument(app).expose(app)
 
 # Global variables for components
 config = {}
@@ -162,43 +166,124 @@ def reset_database():
         logger.error(f"Error resetting database: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
+# Registry to track the real-time progress of document ingestion tasks
+ingestion_statuses: Dict[str, Dict[str, Any]] = {}
+
+def async_ingest_document(temp_path: str, filename: str, chunk_size: int, chunk_overlap: int):
+    """Worker function executed in the background to chunk and embed documents in batches."""
+    try:
+        ingestion_statuses[filename] = {
+            "status": "extracting",
+            "total_chunks": 0,
+            "processed_chunks": 0,
+            "error": None
+        }
+        logger.info(f"[Background Ingest] Extracting text from {filename}...")
+        documents = process_document(temp_path, chunk_size=chunk_size, chunk_overlap=chunk_overlap)
+        
+        if not documents:
+            ingestion_statuses[filename] = {
+                "status": "failed",
+                "total_chunks": 0,
+                "processed_chunks": 0,
+                "error": "Document yielded no text content."
+            }
+            logger.error(f"[Background Ingest] Extraction failed for {filename}: No text content.")
+            return
+
+        total_chunks = len(documents)
+        ingestion_statuses[filename] = {
+            "status": "indexing",
+            "total_chunks": total_chunks,
+            "processed_chunks": 0,
+            "error": None
+        }
+        logger.info(f"[Background Ingest] Indexing {total_chunks} chunks for {filename} to Qdrant...")
+
+        # Batch insert chunks (e.g. 5 at a time) to report progress in real-time
+        batch_size = 5
+        for i in range(0, total_chunks, batch_size):
+            batch = documents[i:i + batch_size]
+            vector_store.add_documents(batch)
+            processed = min(i + batch_size, total_chunks)
+            ingestion_statuses[filename]["processed_chunks"] = processed
+            logger.info(f"[Background Ingest] Embedded {processed}/{total_chunks} chunks for {filename}")
+
+        ingestion_statuses[filename]["status"] = "completed"
+        logger.info(f"[Background Ingest] Ingestion completed for {filename}!")
+        
+    except Exception as e:
+        logger.error(f"[Background Ingest] Failed to ingest {filename}: {e}")
+        ingestion_statuses[filename] = {
+            "status": "failed",
+            "total_chunks": 0,
+            "processed_chunks": 0,
+            "error": str(e)
+        }
+    finally:
+        # Clean up temporary file
+        if os.path.exists(temp_path):
+            try:
+                os.remove(temp_path)
+            except Exception as clean_ex:
+                logger.error(f"[Background Ingest] Failed to clean temp upload: {clean_ex}")
+
 @app.post("/api/upload")
-async def upload_document(file: UploadFile = File(...)):
-    """Uploads a file, extracts text, chunks it, generates embeddings, and saves to Qdrant."""
+async def upload_document(background_tasks: BackgroundTasks, file: UploadFile = File(...)):
+    """Uploads a file, writes it to temp directory, and initiates background indexing."""
     temp_path = os.path.join(UPLOAD_DIR, file.filename)
     try:
         # Save upload to temporary file
         with open(temp_path, "wb") as buffer:
             shutil.copyfileobj(file.file, buffer)
             
-        logger.info(f"Processing uploaded file: {file.filename}")
+        logger.info(f"Queued file for background processing: {file.filename}")
         
         # Load parameters from config
         rag_conf = config.get("rag", {})
         chunk_size = rag_conf.get("chunk_size", 500)
         chunk_overlap = rag_conf.get("chunk_overlap", 50)
         
-        # Step 1: Text extraction and Chunking (returns list of LangChain Document objects)
-        documents = process_document(temp_path, chunk_size=chunk_size, chunk_overlap=chunk_overlap)
-        if not documents:
-            raise HTTPException(status_code=400, detail="Document yielded no text content.")
-            
-        # Step 2: Store in Qdrant via LangChain (handles dense and sparse vectors internally)
-        logger.info(f"Indexing {len(documents)} chunks to Qdrant Vector Store...")
-        vector_store.add_documents(documents)
+        # Queue the background processing task
+        background_tasks.add_task(
+            async_ingest_document,
+            temp_path,
+            file.filename,
+            chunk_size,
+            chunk_overlap
+        )
         
         return {
-            "status": "success",
-            "file_name": file.filename,
-            "chunks_count": len(documents)
+            "status": "queued",
+            "file_name": file.filename
         }
     except Exception as e:
-        logger.error(f"Failed to process upload {file.filename}: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
-    finally:
-        # Clean up temporary file
+        logger.error(f"Failed to queue upload {file.filename}: {e}")
         if os.path.exists(temp_path):
             os.remove(temp_path)
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.get("/api/upload/status/{file_name}")
+def get_upload_status(file_name: str):
+    """Polls real-time progress of document ingestion."""
+    if file_name in ingestion_statuses:
+        return ingestion_statuses[file_name]
+        
+    # Fallback check: if completed in a previous run and already saved in vector store
+    try:
+        indexed_files = vector_store.get_indexed_files()
+        for f in indexed_files:
+            if f.get("file_name") == file_name:
+                return {
+                    "status": "completed",
+                    "total_chunks": f.get("chunk_count", 0),
+                    "processed_chunks": f.get("chunk_count", 0),
+                    "error": None
+                }
+    except Exception as e:
+        logger.error(f"Error querying indexed files list: {e}")
+        
+    raise HTTPException(status_code=404, detail="Ingestion job status not found for this file.")
 
 @app.post("/api/query")
 def query_pipeline(request: QueryRequest):

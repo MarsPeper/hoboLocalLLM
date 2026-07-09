@@ -1,7 +1,7 @@
 conda activate LocalLLM
 
 llama-server `
-  -m "{path_to_model}" `
+  -m "C:\LLMModels\Phi-4-mini-instruct.Q8_0.gguf" `
   -c 8192 `
   -ngl 999 `
   --host 0.0.0.0 `

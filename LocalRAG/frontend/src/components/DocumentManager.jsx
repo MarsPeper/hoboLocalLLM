@@ -65,7 +65,7 @@ export default function DocumentManager() {
     setUploadStatus({
       state: 'uploading',
       filename: file.name,
-      message: 'Extracting text and generating local embeddings...'
+      message: 'Uploading document to server...'
     });
 
     const formData = new FormData();
@@ -79,16 +79,52 @@ export default function DocumentManager() {
 
       const result = await response.json();
 
-      if (response.ok) {
-        setUploadStatus({
-          state: 'success',
-          filename: file.name,
-          message: `Indexed successfully! Split into ${result.chunks_count} chunks.`
-        });
-        fetchDocuments();
-      } else {
+      if (!response.ok) {
         throw new Error(result.detail || 'Upload failed');
       }
+
+      // Begin real-time progress polling interval
+      const pollInterval = setInterval(async () => {
+        try {
+          const statusRes = await fetch(`http://localhost:8000/api/upload/status/${encodeURIComponent(file.name)}`);
+          if (!statusRes.ok) return;
+
+          const statusData = await statusRes.json();
+
+          if (statusData.status === 'extracting') {
+            setUploadStatus({
+              state: 'uploading',
+              filename: file.name,
+              message: '📄 Extracting text and partition splitting...'
+            });
+          } else if (statusData.status === 'indexing') {
+            const { processed_chunks, total_chunks } = statusData;
+            setUploadStatus({
+              state: 'uploading',
+              filename: file.name,
+              message: `⚡ Generating embeddings & indexing: ${processed_chunks} / ${total_chunks} chunks...`
+            });
+          } else if (statusData.status === 'completed') {
+            clearInterval(pollInterval);
+            setUploadStatus({
+              state: 'success',
+              filename: file.name,
+              message: `✅ Indexed successfully! Created ${statusData.total_chunks} chunks.`
+            });
+            fetchDocuments();
+          } else if (statusData.status === 'failed') {
+            clearInterval(pollInterval);
+            setUploadStatus({
+              state: 'error',
+              filename: file.name,
+              message: `❌ Ingestion failed: ${statusData.error || 'Unknown extraction error'}`
+            });
+          }
+        } catch (pollErr) {
+          console.error('Error polling status:', pollErr);
+        }
+      }, 1000);
+
     } catch (err) {
       console.error('Upload error:', err);
       setUploadStatus({
